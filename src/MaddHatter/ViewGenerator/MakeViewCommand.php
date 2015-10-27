@@ -67,9 +67,8 @@ class MakeView extends Command
             $this->file->makeDirectory($directory, 0777, true);
         }
 
-        if ( ! $this->file->exists($path)) {
-            $this->file->put($path, $this->getViewContents());
-        }
+        $this->file->put($path, $this->getViewContents());
+        $this->info("Created a new view at {$path}");
     }
 
     protected function getFilePath()
@@ -109,6 +108,7 @@ class MakeView extends Command
         $sections = [];
 
         if ( ! $this->view->exists($parent)) {
+            $this->warn("Could not find view: {$parent}");
             return $sections;
         }
 
