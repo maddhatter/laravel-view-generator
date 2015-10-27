@@ -4,7 +4,7 @@ use Illuminate\Console\Command;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\View\Factory;
 
-class MakeView extends Command
+class MakeViewCommand extends Command
 {
 
     /**
