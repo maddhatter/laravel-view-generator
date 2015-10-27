@@ -88,7 +88,7 @@ class MakeView extends Command
             $sections = $this->getSections($extends);
 
             foreach ($sections as $section) {
-                $content[] = PHP_EOL . "@section({$section})" . '@endsection';
+                $content[] = PHP_EOL . "@section({$section})" . PHP_EOL . '@endsection';
             }
 
             return join(PHP_EOL, $content);
