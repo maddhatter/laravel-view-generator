@@ -14,7 +14,9 @@ class MakeViewCommand extends Command
      */
     protected $signature = 'make:view
         {viewname : The name of the view in dotted notation}
-        {--e|extend= : (optional) The view this view extends}';
+        {--e|extend= : (optional) The view this view extends}
+        {--r|resource : Create resourceful views at this location}
+        {--force : Overwrite existing views}';
 
     /**
      * The console command description.
@@ -54,47 +56,53 @@ class MakeViewCommand extends Command
      */
     public function handle()
     {
-        $path      = $this->getFilePath();
-        $directory = dirname($path);
+        $views = $this->viewsToCreate();
 
-        if ($this->file->exists($path)) {
-            $this->error("A view already exists at {$path}!");
+        foreach ($views as $name => $path) {
+            $directory = dirname($path);
 
-            return false;
-        }
-
-        if ( ! $this->file->exists($directory)) {
-            $this->file->makeDirectory($directory, 0777, true);
-        }
-
-        $this->file->put($path, $this->getViewContents());
-        $this->info("Created a new view at {$path}");
-    }
-
-    protected function getFilePath()
-    {
-        return config('view.paths')[0] . '/' . str_replace('.', '/', $this->argument('viewname')) . '.blade.php';
-    }
-
-    protected function getViewContents()
-    {
-
-        if ($extends = $this->extending()) {
-            $content = [];
-
-            $content[] = "@extends('{$extends}')";
-
-            $sections = $this->getSections($extends);
-
-            foreach ($sections as $section) {
-                $content[] = PHP_EOL . "@section({$section})" . PHP_EOL . '@endsection';
+            if ($this->file->exists($path) && ! $this->option('force')) {
+                $this->error("A view already exists at {$path}!");
+                continue;
             }
 
-            return join(PHP_EOL, $content);
+            if ( ! $this->file->exists($directory)) {
+                $this->file->makeDirectory($directory, 0777, true);
+            }
 
+            $this->file->put($path, $this->view($name));
+            $this->info("Created a new view at {$path}");
+        }
+    }
+
+    protected function viewsToCreate()
+    {
+        if ($this->option('resource')) {
+            $folder = $this->argument('viewname');
+
+            return [
+                "$folder.index"  => $this->name2Path("$folder.index"),
+                "$folder.create" => $this->name2Path("$folder.create"),
+                "$folder.edit"   => $this->name2Path("$folder.edit"),
+                "$folder.show"   => $this->name2Path("$folder.show"),
+            ];
         }
 
-        return $this->argument('viewname');
+        return [$this->argument('viewname') => $this->name2Path($this->argument('viewname'))];
+    }
+
+    protected function name2Path($name)
+    {
+        return config('view.paths')[0] . '/' . str_replace('.', '/', $name) . '.blade.php';
+    }
+
+    protected function view($name)
+    {
+        if ($extends = $this->extending()) {
+            return $this->renderView($extends);
+        }
+
+        return $name;
     }
 
     protected function extending()
@@ -102,28 +110,36 @@ class MakeViewCommand extends Command
         return empty($this->option('extend')) ? false : $this->option('extend');
     }
 
-
-    private function getSections($parent)
+    protected function renderView($extends)
     {
-        $sections = [];
+        $content = [];
 
-        if ( ! $this->view->exists($parent)) {
-            $this->warn("Could not find view: {$parent}");
-            return $sections;
+        $content[] = "@extends('{$extends}')";
+
+        if ( ! $this->view->exists($extends)) {
+            $this->warn("Could not find view: {$extends}");
+
+            return join(PHP_EOL, $content);
         }
 
-        $path    = $this->view->getFinder()->find($parent);
-        $content = $this->file->get($path);
+        $path   = $this->view->getFinder()->find($extends);
+        $parent = $this->file->get($path);
 
-        if (preg_match_all('/\B@(\w+)([ \t]*)(\( ( (?>[^()]+) | (?3) )* \))?/x', $content, $matches)) {
+        if (preg_match_all('/\B@(\w+)([ \t]*)(\( ( (?>[^()]+) | (?3) )* \))?/x', $parent, $matches)) {
             for ($i = 0; $i < count($matches[1]); $i++) {
-                if ($matches[1][$i] == 'yield') {
-                    $sections[] = $matches[4][$i];
+                switch ($matches[1][$i]) {
+                    case 'yield':
+                    case 'section':
+                        $content[] = PHP_EOL . "@section({$matches[4][$i]})" . PHP_EOL . '@endsection';
+                        break;
+                    case 'stack':
+                        $content[] = PHP_EOL . "@push({$matches[4][$i]})" . PHP_EOL . '@endpush';
+                        break;
                 }
             }
         }
 
-        return $sections;
+        return join(PHP_EOL, $content);
     }
 
 
