@@ -17,17 +17,6 @@ Or add the following to your composer.json's require section and `composer updat
 }
 ```
 
-Then register the service provider in your `app/Providers/AppServiceProvider.php` to only be included for the local environment:
-
-```php
-public function register()
-{
-    if ($this->app->environment() == 'local') {
-        $this->app->register(\MaddHatter\ViewGenerator\ServiceProvider::class);
-    }
-}
-```
-
 Or if you always want it included regardless of environment, just add it to the `providers` array in `config/app.php`
 
 ## Usage

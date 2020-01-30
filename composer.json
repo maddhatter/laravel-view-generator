@@ -19,5 +19,12 @@
         "psr-4": {
             "MaddHatter\\ViewGenerator\\": "src/"
         }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "MaddHatter\\ViewGenerator\\ServiceProvider"
+            ]
+        }
     }
 }
