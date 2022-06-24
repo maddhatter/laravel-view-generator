@@ -127,6 +127,11 @@ class MakeViewCommand extends Command
 
         if (preg_match_all('/\B@(\w+)([ \t]*)(\( ( (?>[^()]+) | (?3) )* \))?/x', $parent, $matches)) {
             for ($i = 0; $i < count($matches[1]); $i++) {
+                // Skip sections starting w/ a _
+                if (str_starts_with($matches[4][$i], '\'_')) {
+                    continue;
+                }
+
                 switch ($matches[1][$i]) {
                     case 'yield':
                     case 'section':

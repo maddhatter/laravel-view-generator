@@ -38,7 +38,7 @@ Note: If there are multiple paths defined in your `config/view.php`'s `paths` ar
 php artisan make:view path.to.your.view -e path.to.parent.view
 ```
 
-You can optionally extend another view by adding the `-e` parameter and providing the name of the view you want to extend. It will parse the parent view for `@yield()` directives and create the corresponding `@section` / `@endsection` tags.
+You can optionally extend another view by adding the `-e` parameter and providing the name of the view you want to extend. It will parse the parent view for `@yield()` directives and create the corresponding `@section` / `@endsection` tags. To exclude a section from automatic creation, begin the name with an underscore, e.g.: `_meta`
 
 #### Example 
 
@@ -51,6 +51,7 @@ resources/views/layouts/master.blade.php
 <html>
 <head>
   <meta charset="UTF-8">
+  @yield('_meta')
 </head>
 <body>
 
